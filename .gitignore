@@ -10,7 +10,8 @@ backend/.env
 frontend/dist
 
 # Uploaded images
-backend/uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
 
 # Logs
 *.log
