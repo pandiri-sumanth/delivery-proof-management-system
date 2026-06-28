@@ -348,10 +348,14 @@ const getAIInsights = async (req, res) => {
       }
 
       const stats = {
-        total: results[0].total || 0,
-        delivered: results[0].delivered || 0,
-        damaged: results[0].damaged || 0
+        total: Number(results[0].total || 0),
+        delivered: Number(results[0].delivered || 0),
+        damaged: Number(results[0].damaged || 0)
       };
+      console.log("Stats:", stats);
+      console.log("Type Total:", typeof stats.total);
+      console.log("Type Delivered:", typeof stats.delivered);
+      console.log("Type Damaged:", typeof stats.damaged);
 
       let insight;
       try {
