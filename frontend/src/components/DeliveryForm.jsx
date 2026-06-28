@@ -57,7 +57,7 @@ function DeliveryForm() {
         );
       });
 
-      await API.post(
+      const response = await API.post(
         "/delivery",
         data,
         {
@@ -67,6 +67,7 @@ function DeliveryForm() {
           }
         }
       );
+      console.log("SUCCESS RESPONSE:", response);
 
       toast.success(
         "Delivery Saved Successfully"
@@ -86,8 +87,11 @@ function DeliveryForm() {
       }
 
     } catch (error) {
-
-      console.error(error);
+      console.log("FULL ERROR:", error);
+      console.log("RESPONSE:", error.response);
+      console.log("DATA:", error.response?.data);
+      console.log("STATUS:", error.response?.status);
+      console.log("MESSAGE:", error.message);
 
       toast.error(
         "Failed to Save Delivery"

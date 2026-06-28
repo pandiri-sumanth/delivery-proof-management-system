@@ -1,32 +1,30 @@
 const mysql = require("mysql2");
 require("dotenv").config();
 
-if (
-  !process.env.DB_HOST ||
-  !process.env.DB_USER ||
-  !process.env.DB_NAME
-) {
-  throw new Error("Database environment variables are missing.");
-}
-
-const connection = mysql.createConnection({
+const pool = mysql.createPool({
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT || 3306,
+  port: process.env.DB_PORT,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-connection.connect((err) => {
+pool.getConnection((err, connection) => {
+
   if (err) {
-    console.error("❌ Database Connection Failed");
     console.error(err);
     return;
   }
 
   console.log(
-    `✅ MySQL Connected Successfully (${process.env.DB_NAME})`
+    `✅ MySQL Pool Connected (${process.env.DB_NAME})`
   );
+
+  connection.release();
+
 });
 
-module.exports = connection;
+module.exports = pool;

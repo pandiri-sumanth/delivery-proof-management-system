@@ -23,7 +23,6 @@ function EditDelivery() {
   const [proofImages, setProofImages] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const imageBaseURL = `${API.defaults.baseURL}/uploads`;
 
   useEffect(() => {
     fetchDelivery();
@@ -263,9 +262,13 @@ function EditDelivery() {
                 existingImages.map((image, index) => (
                   <div key={`${image}-${index}`} className="relative">
                     <img
-                      src={`${imageBaseURL}/${image}`}
+                      src={image}
                       alt="Proof"
                       className="w-24 h-24 object-cover rounded-lg border"
+                      onError={(e) => {
+                        e.target.src =
+                          "https://placehold.co/100x100?text=No+Image";
+                      }}
                     />
                     <button
                       type="button"

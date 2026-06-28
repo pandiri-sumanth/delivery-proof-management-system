@@ -27,8 +27,6 @@ function DeliveryTable() {
   const [showModal, setShowModal] =
     useState(false);
 
-  const imageBaseURL = `${API.defaults.baseURL}/uploads`;
-
   useEffect(() => {
     fetchDeliveries();
   }, []);
@@ -359,7 +357,7 @@ const prevImage = () => {
         >
 
           <img
-            src={`${imageBaseURL}/${images[0]}`}
+            src={images[0]}
             alt="Proof"
             className="w-16 h-16 object-cover rounded-lg border"
           />
@@ -464,7 +462,7 @@ const prevImage = () => {
           </button>
 
           <img
-            src={`${imageBaseURL}/${selectedImages[selectedIndex]}`}
+            src={selectedImages[selectedIndex]}
             alt="Proof"
             className="w-full max-h-[70vh] object-contain rounded-lg"
           />
@@ -476,7 +474,7 @@ const prevImage = () => {
 
                 <img
                   key={`${image}-${index}`}
-                  src={`${imageBaseURL}/${image}`}
+                  src={image}
                   alt="Thumbnail"
                   onClick={() =>
                     setSelectedIndex(index)

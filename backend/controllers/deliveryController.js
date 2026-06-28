@@ -1,4 +1,6 @@
 const db = require("../config/db");
+const cloudinary = require("../config/cloudinary");
+const { getPublicId } = require("../utils/cloudinaryHelper");
 const fs = require("fs");
 const path = require("path");
 
@@ -18,7 +20,6 @@ const dashboardStatsQuery = `
 
 // CREATE DELIVERY
 const createDelivery = (req, res) => {
-
   const {
     tracking_id,
     receiver_name,
@@ -30,7 +31,7 @@ const createDelivery = (req, res) => {
   const proof_images =
     req.files && req.files.length > 0
       ? JSON.stringify(
-          req.files.map((file) => file.filename)
+          req.files.map((file) => file.path)
         )
       : JSON.stringify([]);
 
@@ -58,7 +59,6 @@ const createDelivery = (req, res) => {
       proof_images
     ],
     (err, result) => {
-
       if (err) {
         console.error(err);
 
@@ -128,133 +128,117 @@ const getDeliveryById = (req, res) => {
 };
 
 // UPDATE DELIVERY
-const updateDelivery = (req, res) => {
+const updateDelivery = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  const { id } = req.params;
+    const {
+      tracking_id,
+      receiver_name,
+      status,
+      condition_status,
+      remarks,
+      existingImages
+    } = req.body;
 
-  const {
-    tracking_id,
-    receiver_name,
-    status,
-    condition_status,
-    remarks,
-    existingImages
-  } = req.body;
+    const oldImages =
+      existingImages
+        ? JSON.parse(existingImages)
+        : [];
 
-  const oldImages =
-    existingImages
-      ? JSON.parse(existingImages)
-      : [];
+    const newImages =
+      req.files
+        ? req.files.map((file) => file.path)
+        : [];
 
-  const newImages =
-    req.files
-      ? req.files.map((file) => file.filename)
-      : [];
+    const proof_images =
+      JSON.stringify([
+        ...oldImages,
+        ...newImages
+      ]);
 
-  const proof_images =
-    JSON.stringify([
-      ...oldImages,
-      ...newImages
-    ]);
+    const [results] = await db.promise().query(
+      "SELECT proof_images FROM delivery_proofs WHERE id = ?",
+      [id]
+    );
 
-  db.query(
-    "SELECT proof_images FROM delivery_proofs WHERE id = ?",
-    [id],
-    (err, results) => {
+    let previousImages = [];
 
-      if (!err && results.length > 0) {
+    try {
+      previousImages = JSON.parse(
+        results[0]?.proof_images || "[]"
+      );
+    } catch {
+      previousImages = [];
+    }
 
-        let previousImages = [];
+    const removedImages = previousImages.filter(
+      (image) => !oldImages.includes(image)
+    );
 
+    for (const image of removedImages) {
+      if (
+        image &&
+        image.startsWith("https://res.cloudinary.com")
+      ) {
         try {
-          previousImages =
-            JSON.parse(
-              results[0].proof_images || "[]"
-            );
-        } catch {
-          previousImages = [];
-        }
+          const publicId = getPublicId(image);
 
-        const removedImages =
-          previousImages.filter(
-            (image) =>
-              !oldImages.includes(image)
-          );
-
-        removedImages.forEach((image) => {
-          const imagePath =
-            path.join(
-              __dirname,
-              "../uploads",
-              image
-            );
-
-          if (fs.existsSync(imagePath)) {
-            fs.unlink(imagePath, (err) => {
-              if (err) {
-                console.error(err);
-              }
-            });
+          if (publicId) {
+            await cloudinary.uploader.destroy(publicId);
+            console.log(`Deleted: ${publicId}`);
           }
-        });
-
+        } catch (error) {
+          console.error(error);
+        }
       }
-
     }
-  );
 
-  const sql = `
-    UPDATE delivery_proofs
-    SET
-      tracking_id = ?,
-      receiver_name = ?,
-      status = ?,
-      condition_status = ?,
-      remarks = ?,
-      proof_images = ?
-    WHERE id = ?
-  `;
+    const sql = `
+      UPDATE delivery_proofs
+      SET
+        tracking_id = ?,
+        receiver_name = ?,
+        status = ?,
+        condition_status = ?,
+        remarks = ?,
+        proof_images = ?
+      WHERE id = ?
+    `;
 
-  const values = [
-    tracking_id,
-    receiver_name,
-    status,
-    condition_status,
-    remarks,
-    proof_images,
-    id
-  ];
+    const values = [
+      tracking_id,
+      receiver_name,
+      status,
+      condition_status,
+      remarks,
+      proof_images,
+      id
+    ];
 
-  db.query(
-    sql,
-    values,
-    (err, result) => {
+    await db.promise().query(sql, values);
 
-      if (err) {
-        console.error(err);
+    res.status(200).json({
+      message: "Delivery updated successfully"
+    });
+  } catch (err) {
+    console.error(err);
 
-        return res.status(500).json({
-          message: "Failed to update delivery"
-        });
-      }
-
-      res.status(200).json({
-        message: "Delivery updated successfully"
-      });
-
-    }
-  );
+    return res.status(500).json({
+      message: "Failed to update delivery"
+    });
+  }
 };
 
 // DELETE DELIVERY
-const deleteDelivery = (req, res) => {
+const deleteDelivery = async (req, res) => {
 
   const { id } = req.params;
 
   db.query(
     "SELECT proof_images FROM delivery_proofs WHERE id = ?",
     [id],
-    (err, results) => {
+    async (err, results) => {
 
       if (err) {
         console.error(err);
@@ -276,21 +260,27 @@ const deleteDelivery = (req, res) => {
           images = [];
         }
 
-        images.forEach((image) => {
-          const imagePath = path.join(
-            __dirname,
-            "../uploads",
-            image
-          );
-
-          if (fs.existsSync(imagePath)) {
-            fs.unlink(imagePath, (err) => {
-              if (err) {
-                console.error(err);
+        for (const image of images) {
+          if (
+            image &&
+            image.startsWith("https://res.cloudinary.com")
+          ) {
+            try {
+              const publicId = getPublicId(image);
+              if (publicId) {
+                await cloudinary.uploader.destroy(publicId);
+                console.log(
+                  `Deleted Cloudinary image: ${publicId}`
+                );
               }
-            });
+            } catch (error) {
+              console.error(
+                "Cloudinary delete failed:",
+                error
+              );
+            }
           }
-        });
+        }
 
       }
 
