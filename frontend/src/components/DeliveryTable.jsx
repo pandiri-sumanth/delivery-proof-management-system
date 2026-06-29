@@ -12,6 +12,7 @@ import DeliveryStats from "./delivery/DeliveryStats";
 import DeliveryTableHeader from "./delivery/DeliveryTableHeader";
 import DeliveryTableRow from "./delivery/DeliveryTableRow";
 import ImageModal from "./delivery/ImageModal";
+import AISearch from "./delivery/AISearch";
 
 function DeliveryTable() {
 
@@ -32,6 +33,19 @@ function DeliveryTable() {
 
   const [showModal, setShowModal] =
     useState(false);
+
+  const [aiResults, setAiResults] = useState(null);
+  const [isAISearchActive, setIsAISearchActive] = useState(false);
+
+  const handleAISearchResults = (results) => {
+    setAiResults(results);
+    setIsAISearchActive(true);
+  };
+
+  const handleClearAISearch = () => {
+    setAiResults(null);
+    setIsAISearchActive(false);
+  };
 
   useEffect(() => {
     fetchDeliveries();
@@ -139,7 +153,9 @@ function DeliveryTable() {
 
   const searchTerm = search.toLowerCase();
 
-  const filteredDeliveries = deliveries.filter(
+  const sourceData = isAISearchActive ? aiResults : deliveries;
+
+  const filteredDeliveries = sourceData.filter(
     (delivery) =>
       delivery.tracking_id
         ?.toLowerCase()
@@ -175,6 +191,12 @@ function DeliveryTable() {
         darkMode={darkMode}
         onExportPDF={generatePDF}
         csvData={csvData}
+      />
+
+      <AISearch 
+        darkMode={darkMode} 
+        onSearchResults={handleAISearchResults} 
+        onClearSearch={handleClearAISearch} 
       />
 
       <DeliveryStats

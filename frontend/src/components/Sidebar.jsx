@@ -1,6 +1,7 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext";
+import { AuthContext } from "../context/AuthContext";
 
 import {
   FaChartLine,
@@ -18,17 +19,21 @@ import {
 function Sidebar({ mobileOpen, setMobileOpen }) {
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { darkMode, toggleTheme } = useContext(ThemeContext);
+  const { user, hasRole, logout } = useContext(AuthContext);
 
   const menuItems = [
-    { path: "/dashboard",    icon: FaChartLine,  label: "Dashboard",        color: "from-blue-500 to-cyan-500" },
-    { path: "/add-delivery", icon: FaPlusCircle, label: "Add Delivery",     color: "from-violet-500 to-purple-600" },
-    { path: "/records",      icon: FaBoxOpen,    label: "Delivery Records",  color: "from-amber-500 to-orange-500" },
-    { path: "/ai-summary",   icon: FaRobot,      label: "AI Summary",       color: "from-pink-500 to-rose-600" },
+    { path: "/dashboard",    icon: FaChartLine,  label: "Dashboard",        color: "from-blue-500 to-cyan-500", roles: ["Admin", "Operations Staff", "Logistics Manager"] },
+    { path: "/add-delivery", icon: FaPlusCircle, label: "Add Delivery",     color: "from-violet-500 to-purple-600", roles: ["Admin", "Operations Staff", "Warehouse Staff"] },
+    { path: "/records",      icon: FaBoxOpen,    label: "Delivery Records",  color: "from-amber-500 to-orange-500", roles: ["Admin", "Operations Staff", "Warehouse Staff", "Documentation Executive", "Logistics Manager"] },
+    { path: "/ai-summary",   icon: FaRobot,      label: "AI Summary",       color: "from-pink-500 to-rose-600", roles: ["Admin", "Operations Staff", "Logistics Manager"] },
   ];
 
+  const visibleNavItems = menuItems.filter(item => hasRole(item.roles));
+
   const handleLogout = () => {
-    sessionStorage.removeItem("isLoggedIn");
+    logout();
     navigate("/");
   };
 
@@ -89,7 +94,7 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
             Main Menu
           </p>
 
-          {menuItems.map(({ path, icon: Icon, label, color }) => (
+          {visibleNavItems.map(({ path, icon: Icon, label, color }) => (
             <NavLink
               key={path}
               to={path}
@@ -146,8 +151,8 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#0d1117]" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-white truncate">Admin User</p>
-              <p className="text-[11px] text-slate-400 truncate">Logistics Manager</p>
+              <p className="text-sm font-semibold text-white truncate">{user?.name || "Loading..."}</p>
+              <p className="text-[11px] text-slate-400 truncate">{user?.role || "..."}</p>
             </div>
           </div>
 

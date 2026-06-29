@@ -1,6 +1,9 @@
+import { useContext } from "react";
 import { FaBars, FaBell, FaSearch, FaUserCircle } from "react-icons/fa";
+import { AuthContext } from "../context/AuthContext";
 
 function Navbar({ darkMode, onMenuClick }) {
+  const { user } = useContext(AuthContext);
   return (
     <header
       className={`sticky top-0 z-30 flex items-center justify-between px-5 md:px-8 h-16 border-b transition-all duration-200
@@ -63,17 +66,19 @@ function Navbar({ darkMode, onMenuClick }) {
         >
           <div className="relative">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
-              <span className="text-white text-sm font-bold">A</span>
+              <span className="text-white text-sm font-bold">
+                {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+              </span>
             </div>
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-white" />
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-white dark:ring-slate-900" />
           </div>
 
           <div className="hidden lg:block">
             <p className={`text-sm font-semibold leading-tight ${darkMode ? "text-white" : "text-slate-800"}`}>
-              Admin User
+              {user?.name || "Loading..."}
             </p>
             <p className={`text-[11px] ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-              Logistics Manager
+              {user?.role || "..."}
             </p>
           </div>
         </div>

@@ -1,5 +1,7 @@
+import { useContext } from "react";
 import { CSVLink } from "react-csv";
 import { FaFilePdf, FaFileCsv, FaSearch } from "react-icons/fa";
+import { AuthContext } from "../../context/AuthContext";
 
 function DeliveryToolbar({
   search,
@@ -8,6 +10,8 @@ function DeliveryToolbar({
   onExportPDF,
   csvData
 }) {
+
+  const { hasRole } = useContext(AuthContext);
 
   const btnBase =
     "inline-flex items-center gap-2 h-10 px-4 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg";
@@ -28,22 +32,26 @@ function DeliveryToolbar({
 
       <div className="flex flex-wrap items-center gap-3">
 
-        <button
-          onClick={onExportPDF}
-          className={`${btnBase} bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700`}
-        >
-          <FaFilePdf size={14} />
-          Export PDF
-        </button>
+        {hasRole(["Admin", "Operations Staff", "Logistics Manager"]) && (
+          <>
+            <button
+              onClick={onExportPDF}
+              className={`${btnBase} bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700`}
+            >
+              <FaFilePdf size={14} />
+              Export PDF
+            </button>
 
-        <CSVLink
-          data={csvData}
-          filename="delivery-records.csv"
-          className={`${btnBase} bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700`}
-        >
-          <FaFileCsv size={14} />
-          Export CSV
-        </CSVLink>
+            <CSVLink
+              data={csvData}
+              filename="delivery-records.csv"
+              className={`${btnBase} bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700`}
+            >
+              <FaFileCsv size={14} />
+              Export CSV
+            </CSVLink>
+          </>
+        )}
 
         <div className={inputBase} style={{ width: "300px" }}>
           <FaSearch size={13} className="shrink-0 text-gray-400" />

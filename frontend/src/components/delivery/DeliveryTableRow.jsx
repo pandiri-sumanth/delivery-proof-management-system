@@ -1,5 +1,7 @@
+import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { AuthContext } from "../../context/AuthContext";
 
 import StatusBadge from "./StatusBadge";
 import ConditionBadge from "./ConditionBadge";
@@ -12,6 +14,8 @@ function DeliveryTableRow({
   onDelete,
   isOdd
 }) {
+
+  const { hasRole } = useContext(AuthContext);
 
   let images = [];
 
@@ -71,20 +75,24 @@ function DeliveryTableRow({
       <td className="py-4 px-4">
         <div className="flex items-center gap-2">
 
-          <Link to={`/edit/${delivery.id}`}>
-            <button className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
-              <FaEdit size={11} />
-              Edit
-            </button>
-          </Link>
+          {hasRole(["Admin", "Operations Staff", "Warehouse Staff", "Documentation Executive"]) && (
+            <Link to={`/edit/${delivery.id}`}>
+              <button className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+                <FaEdit size={11} />
+                Edit
+              </button>
+            </Link>
+          )}
 
-          <button
-            onClick={() => onDelete(delivery.id)}
-            className="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <FaTrash size={11} />
-            Delete
-          </button>
+          {hasRole(["Admin", "Operations Staff"]) && (
+            <button
+              onClick={() => onDelete(delivery.id)}
+              className="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <FaTrash size={11} />
+              Delete
+            </button>
+          )}
 
         </div>
       </td>

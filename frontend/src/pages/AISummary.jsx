@@ -47,6 +47,7 @@ function AISummary() {
 
   const [stats, setStats] = useState({ total: 0, delivered: 0, damaged: 0 });
   const [aiInsight, setAiInsight] = useState("");
+  const [aiMode, setAiMode] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -60,24 +61,24 @@ function AISummary() {
     } catch (error) { console.error(error); }
   };
 
-  const fetchAIInsights = async () => {
+    const fetchAIInsights = async () => {
     try {
       setLoading(true);
       const response = await API.get("/delivery/ai-insights");
       setAiInsight(response.data.insight);
+      setAiMode(response.data.mode || "");
     } catch (error) {
       console.error(error);
-      setAiInsight("Unable to generate AI insights at this moment.");
+      setAiInsight(null);
+      setAiMode("🔴 Connection Failed");
     } finally {
       setLoading(false);
     }
   };
 
-  const damageRate = stats.total > 0 ? ((stats.damaged / stats.total) * 100).toFixed(1) : 0;
-  const successRate = stats.total > 0 ? ((stats.delivered / stats.total) * 100).toFixed(1) : 0;
-  const healthScore = Math.max(0, 100 - Number(damageRate) * 2).toFixed(0);
-
-  const riskLevel = damageRate < 5 ? "Low" : damageRate < 15 ? "Medium" : "High";
+  const healthScore = aiInsight?.scores?.healthScore || Math.max(0, 100 - (stats.total > 0 ? (stats.damaged / stats.total) * 100 * 2 : 0)).toFixed(0);
+  const successRate = aiInsight?.scores?.successScore || (stats.total > 0 ? ((stats.delivered / stats.total) * 100).toFixed(1) : 0);
+  const riskLevel = aiInsight?.scores?.riskLevel || "Unknown";
   
   const riskColor = riskLevel === "Low" ? "text-emerald-500" : riskLevel === "Medium" ? "text-amber-500" : "text-red-500";
   const healthColor = healthScore >= 80 ? "text-emerald-500" : healthScore >= 60 ? "text-amber-500" : "text-red-500";
@@ -97,7 +98,20 @@ function AISummary() {
           </div>
         </div>
         <div>
-          <h1 className="text-2xl font-black tracking-tight">AI Summary</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-black tracking-tight">AI Summary</h1>
+            {aiMode && (
+              <span 
+                className={`px-3 py-1 rounded-full text-xs font-bold border shadow-sm flex items-center gap-1.5 cursor-default
+                  ${aiMode.includes("Connected") || aiMode.includes("Live") ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20" : 
+                    aiMode.includes("Demo") ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20" : 
+                    "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20"}`}
+                title={aiMode.includes("Demo") ? "Live AI is unavailable. Using built-in analytics." : ""}
+              >
+                {aiMode.includes("Connected") || aiMode.includes("Live") ? "🟢" : aiMode.includes("Demo") ? "🟡" : "🔴"} {aiMode.replace(/[🟢🟡🔴]/g, '').trim()}
+              </span>
+            )}
+          </div>
           <p className="text-sm text-slate-500 mt-0.5">Gemini-powered insights and logistics health analysis</p>
         </div>
       </div>
@@ -125,7 +139,7 @@ function AISummary() {
             </div>
             <div className={`${cardBase} p-5 flex flex-col items-center text-center`}>
               <FaShieldAlt size={24} className={`mb-3 ${riskColor}`} />
-              <span className="text-2xl font-black">{riskLevel}</span>
+              <span className="text-xl font-black mt-1">{riskLevel}</span>
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Risk Level</span>
             </div>
           </div>
@@ -161,7 +175,7 @@ function AISummary() {
                 <div className="w-8 h-8 rounded-full bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
                   <FaRobot size={14} className="text-pink-600 dark:text-pink-400" />
                 </div>
-                <h2 className="text-lg font-bold">Gemini Analysis</h2>
+                <h2 className="text-lg font-bold">Enterprise AI Analysis</h2>
               </div>
               <button
                 onClick={fetchAIInsights}
@@ -174,51 +188,75 @@ function AISummary() {
             </div>
 
             {/* Content */}
-            <div className="p-6 md:p-8 flex-1">
+            <div className="p-6 md:p-8 flex-1 overflow-y-auto">
               {loading ? (
-                <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-60">
+                <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-60 py-10">
                   <div className="relative w-16 h-16">
                     <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-700" />
                     <div className="absolute inset-0 rounded-full border-4 border-pink-500 border-t-transparent animate-spin" />
                   </div>
                   <p className="text-sm font-semibold text-slate-500 animate-pulse">Gemini is analyzing logistics data...</p>
                 </div>
-              ) : (
-                <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none prose-p:leading-relaxed prose-li:marker:text-pink-500">
-                  {/* Basic markdown rendering via CSS classes + whitespace */}
-                  <div className="whitespace-pre-wrap font-medium text-slate-700 dark:text-slate-300">
-                    {aiInsight}
+              ) : aiInsight && typeof aiInsight === 'object' && aiInsight.analysis ? (
+                <div className="space-y-8">
+                  
+                  <div>
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-2 border-b border-white/5 pb-2">Performance Summary</h3>
+                    <p className="text-sm md:text-base leading-relaxed text-slate-700 dark:text-slate-300 font-medium">
+                      {aiInsight.analysis.performanceSummary}
+                    </p>
                   </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-2 border-b border-white/5 pb-2">Operational Insights</h3>
+                      <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300 font-medium">
+                        {aiInsight.analysis.operationalInsights}
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-2 border-b border-white/5 pb-2">Damage Analysis</h3>
+                      <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300 font-medium">
+                        {aiInsight.analysis.damageAnalysis}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-700">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-pink-500 mb-3">Key Recommendations</h3>
+                    <ul className="space-y-2">
+                      {aiInsight.analysis.recommendations?.map((rec, idx) => (
+                        <li key={idx} className="flex gap-3 text-sm font-medium text-slate-700 dark:text-slate-300">
+                          <span className="text-pink-500 font-black">•</span> {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-700">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-blue-500 mb-3">Next Steps</h3>
+                    <ul className="space-y-2">
+                      {aiInsight.analysis.nextSteps?.map((step, idx) => (
+                        <li key={idx} className="flex gap-3 text-sm font-medium text-slate-700 dark:text-slate-300">
+                          <span className="text-blue-500 font-black">•</span> {step}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                </div>
+              ) : (
+                <div className="text-center text-slate-500 py-10">
+                  <FaExclamationTriangle size={30} className="mx-auto mb-3 opacity-50" />
+                  <p>AI Insights are temporarily unavailable.</p>
                 </div>
               )}
             </div>
 
           </div>
 
-          {/* Recommendation Alert */}
-          <div className={`p-5 rounded-2xl border-l-4 flex gap-4 ${
-            damageRate > 10 
-              ? "bg-red-50 dark:bg-red-900/10 border-red-500 text-red-900 dark:text-red-200"
-              : damageRate > 5
-              ? "bg-amber-50 dark:bg-amber-900/10 border-amber-500 text-amber-900 dark:text-amber-200"
-              : "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500 text-emerald-900 dark:text-emerald-200"
-          }`}>
-            <FaInfoCircle size={20} className="shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-bold mb-1">Actionable Recommendation</h4>
-              <p className="text-sm opacity-90 leading-relaxed">
-                {damageRate > 10
-                  ? "High damage rate detected. Immediate review of packaging materials and transportation handling protocols is required."
-                  : damageRate > 5
-                  ? "Monitor shipment quality closely. Slight increase in damages could indicate early signs of handling issues."
-                  : "Operations are stable and performing optimally. Continue maintaining current logistics standards."}
-              </p>
-            </div>
-          </div>
-
         </div>
       </div>
-
     </div>
   );
 }

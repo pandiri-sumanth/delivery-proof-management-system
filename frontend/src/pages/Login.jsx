@@ -1,20 +1,34 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaBox, FaEnvelope, FaLock, FaArrowRight } from "react-icons/fa";
+import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-toastify";
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      sessionStorage.setItem("isLoggedIn", "true");
-      navigate("/dashboard");
-    }, 600);
+    try {
+      const user = await login(email, password);
+      toast.success("Welcome back!");
+      
+      // Redirect based on role
+      if (["Warehouse Staff", "Documentation Executive"].includes(user.role)) {
+        navigate("/records");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

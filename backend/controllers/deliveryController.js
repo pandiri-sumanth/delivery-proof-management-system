@@ -5,9 +5,10 @@ const fs = require("fs");
 const path = require("path");
 
 const {
-  generateInsights
+  generateInsights,
+  generateSearchFilters
 } = require(
-  "../services/geminiService"
+  "../services/aiService"
 );
 
 const dashboardStatsQuery = `
@@ -43,9 +44,10 @@ const createDelivery = (req, res) => {
       status,
       condition_status,
       remarks,
-      proof_images
+      proof_images,
+      created_by
     )
-    VALUES (?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
 
   db.query(
@@ -56,7 +58,8 @@ const createDelivery = (req, res) => {
       status,
       condition_status,
       remarks,
-      proof_images
+      proof_images,
+      req.user.id
     ],
     (err, result) => {
       if (err) {
@@ -202,7 +205,8 @@ const updateDelivery = async (req, res) => {
         status = ?,
         condition_status = ?,
         remarks = ?,
-        proof_images = ?
+        proof_images = ?,
+        updated_by = ?
       WHERE id = ?
     `;
 
@@ -213,6 +217,7 @@ const updateDelivery = async (req, res) => {
       condition_status,
       remarks,
       proof_images,
+      req.user.id,
       id
     ];
 
@@ -357,17 +362,15 @@ const getAIInsights = async (req, res) => {
       console.log("Type Delivered:", typeof stats.delivered);
       console.log("Type Damaged:", typeof stats.damaged);
 
-      let insight;
       try {
-        insight = await generateInsights(stats);
+        const aiResponse = await generateInsights(stats);
+        res.json({ mode: aiResponse.mode, insight: aiResponse.data });
       } catch (error) {
         console.error(error);
         return res.status(500).json({
           message: "AI generation failed"
         });
       }
-
-      res.json({ insight });
 
     });
 
@@ -380,6 +383,65 @@ const getAIInsights = async (req, res) => {
 
 };
 
+const searchByAI = async (req, res) => {
+  try {
+    const { query } = req.body;
+    if (!query) {
+      return res.status(400).json({ message: "Search query is required" });
+    }
+
+    const aiResponse = await generateSearchFilters(query);
+    const filters = aiResponse.filters;
+    
+    let sql = "SELECT * FROM delivery_proofs WHERE 1=1";
+    const values = [];
+
+    if (filters.status) {
+      sql += " AND status = ?";
+      values.push(filters.status);
+    }
+    if (filters.condition_status) {
+      sql += " AND condition_status = ?";
+      values.push(filters.condition_status);
+    }
+    if (filters.search) {
+      sql += " AND (receiver_name LIKE ? OR tracking_id LIKE ?)";
+      values.push(`%${filters.search}%`);
+      values.push(`%${filters.search}%`);
+    }
+
+    if (filters.dateRange) {
+      if (filters.dateRange === "today") {
+        sql += " AND DATE(delivery_time) = CURDATE()";
+      } else if (filters.dateRange === "this_week") {
+        sql += " AND YEARWEEK(delivery_time, 1) = YEARWEEK(CURDATE(), 1)";
+      } else if (filters.dateRange === "this_month") {
+        sql += " AND YEAR(delivery_time) = YEAR(CURDATE()) AND MONTH(delivery_time) = MONTH(CURDATE())";
+      } else if (filters.dateRange === "yesterday") {
+        sql += " AND DATE(delivery_time) = SUBDATE(CURDATE(), 1)";
+      }
+    }
+
+    sql += " ORDER BY id DESC";
+
+    db.query(sql, values, (err, results) => {
+      if (err) {
+        console.error("AI Search DB Error:", err);
+        return res.status(500).json({ message: "Database error during AI search" });
+      }
+      res.status(200).json({
+        mode: aiResponse.mode,
+        filters,
+        results
+      });
+    });
+
+  } catch (error) {
+    console.error("AI Search Error:", error);
+    res.status(500).json({ message: "Failed to process AI search" });
+  }
+};
+
 module.exports = {
   createDelivery,
   getAllDeliveries,
@@ -387,5 +449,6 @@ module.exports = {
   updateDelivery,
   deleteDelivery,
   getStats,
-  getAIInsights
+  getAIInsights,
+  searchByAI
 };
