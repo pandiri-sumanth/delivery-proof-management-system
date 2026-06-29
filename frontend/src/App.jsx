@@ -1,25 +1,13 @@
 import {
   BrowserRouter,
   Routes,
-  Route,
-  useLocation
+  Route
 } from "react-router-dom";
 
-import {
-  useContext
-} from "react";
-
-import {
-  ThemeContext
-} from "./context/ThemeContext";
-
-import {
-  ToastContainer
-} from "react-toastify";
-
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import Sidebar from "./components/Sidebar";
+import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import Login from "./pages/Login";
@@ -29,16 +17,7 @@ import DeliveryRecords from "./pages/DeliveryRecords";
 import AISummary from "./pages/AISummary";
 import EditDelivery from "./pages/EditDelivery";
 
-function Layout() {
-
-  const location = useLocation();
-
-  const {
-    darkMode
-  } = useContext(ThemeContext);
-
-  const hideSidebarRoutes = ["/"];
-  const showSidebar = !hideSidebarRoutes.includes(location.pathname);
+function App() {
 
   const protect = (component) => (
     <ProtectedRoute>
@@ -48,24 +27,16 @@ function Layout() {
 
   return (
 
-    <div className="flex h-screen overflow-hidden">
+    <BrowserRouter>
 
-      {showSidebar && <Sidebar />}
+      <Routes>
 
-      <div
-        className={`flex-1 p-8 overflow-y-auto transition-all ${
-          darkMode
-            ? "bg-gray-900 text-white"
-            : "bg-gray-100 text-black"
-        }`}
-      >
+        <Route
+          path="/"
+          element={<Login />}
+        />
 
-        <Routes>
-
-          <Route
-            path="/"
-            element={<Login />}
-          />
+        <Route element={<Layout />}>
 
           <Route
             path="/dashboard"
@@ -92,22 +63,9 @@ function Layout() {
             element={protect(<EditDelivery />)}
           />
 
-        </Routes>
+        </Route>
 
-      </div>
-
-    </div>
-
-  );
-}
-
-function App() {
-
-  return (
-
-    <BrowserRouter>
-
-      <Layout />
+      </Routes>
 
       <ToastContainer
         position="top-right"
@@ -118,6 +76,7 @@ function App() {
     </BrowserRouter>
 
   );
+
 }
 
 export default App;
