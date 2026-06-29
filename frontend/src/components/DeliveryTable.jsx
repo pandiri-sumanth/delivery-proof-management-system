@@ -163,9 +163,9 @@ function DeliveryTable() {
   return (
 
     <div
-      className={`p-6 rounded-xl shadow ${darkMode
-          ? "bg-gray-800 text-white"
-          : "bg-white text-black"
+      className={`p-6 rounded-2xl border shadow-sm ${darkMode
+          ? "bg-slate-800 text-white border-slate-700/60"
+          : "bg-white text-slate-900 border-gray-100"
         }`}
     >
 

@@ -4,54 +4,31 @@ import DeliveryTable from "../components/DeliveryTable";
 
 function DeliveryRecords() {
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
 
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-
-        <div>
-
-          <div className="flex items-center gap-3">
-
-            <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white">
-
-              <FaClipboardList size={22} />
-
-            </div>
-
-            <div>
-
-              <h1 className="text-4xl font-black tracking-tight">
-                Delivery Records
-              </h1>
-
-              <p className="text-gray-500 dark:text-gray-400 mt-1">
-                View, search, edit and manage all delivery records.
-              </p>
-
-            </div>
-
+      {/* Page header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+            <FaClipboardList size={20} className="text-white" />
           </div>
-
+          <div>
+            <h1 className="text-2xl font-black tracking-tight">Delivery Records</h1>
+            <p className="text-sm text-slate-500 mt-0.5">View, search, edit and manage all records</p>
+          </div>
         </div>
 
         <Link
           to="/add-delivery"
-          className="inline-flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl shadow-lg transition-all duration-300 hover:-translate-y-1"
+          className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5"
         >
-
-          <FaPlusCircle />
-
+          <FaPlusCircle size={13} />
           Add Delivery
-
         </Link>
-
       </div>
 
-      <div>
-
-        <DeliveryTable />
-
-      </div>
+      {/* Table card */}
+      <DeliveryTable />
 
     </div>
   );

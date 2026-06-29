@@ -1,102 +1,84 @@
-import {
-  FaBars,
-  FaBell,
-  FaSearch,
-  FaUserCircle
-} from "react-icons/fa";
+import { FaBars, FaBell, FaSearch, FaUserCircle } from "react-icons/fa";
 
-function Navbar({
-  darkMode,
-  onMenuClick
-}) {
+function Navbar({ darkMode, onMenuClick }) {
   return (
     <header
-      className={`sticky top-0 z-30 flex items-center justify-between px-6 py-4 shadow-md ${
-        darkMode
-          ? "bg-gray-900 border-b border-gray-800"
-          : "bg-white border-b border-gray-200"
-      }`}
+      className={`sticky top-0 z-30 flex items-center justify-between px-5 md:px-8 h-16 border-b transition-all duration-200
+        ${darkMode
+          ? "bg-slate-900/95 backdrop-blur-sm border-slate-700/60 shadow-lg shadow-black/20"
+          : "bg-white/95 backdrop-blur-sm border-gray-100 shadow-sm"
+        }`}
     >
+      {/* Left — burger + title */}
       <div className="flex items-center gap-4">
         <button
+          id="mobile-menu-btn"
           onClick={onMenuClick}
-          className="lg:hidden text-2xl"
+          aria-label="Open menu"
+          className={`lg:hidden p-2 rounded-xl transition-colors ${darkMode ? "hover:bg-slate-700" : "hover:bg-gray-100"}`}
         >
-          <FaBars />
+          <FaBars size={18} />
         </button>
 
         <div>
-          <h1 className="text-2xl font-bold">
+          <h1 className={`text-base md:text-lg font-bold leading-tight tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
             Delivery Proof Management System
           </h1>
-
-          <p
-            className={`text-sm ${
-              darkMode
-                ? "text-gray-400"
-                : "text-gray-500"
-            }`}
-          >
-            Smart Logistics Dashboard
+          <p className={`text-[11px] font-medium ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+            Enterprise Logistics Dashboard
           </p>
         </div>
       </div>
 
+      {/* Right — search + notifications + avatar */}
       <div className="hidden md:flex items-center gap-3">
 
-        <div
-          className={`flex items-center px-4 py-2 rounded-xl ${
-            darkMode
-              ? "bg-gray-800"
-              : "bg-gray-100"
-          }`}
+        {/* Search */}
+        <div className={`flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-sm transition-all duration-200
+          ${darkMode ? "bg-slate-800 border border-slate-700 text-slate-300" : "bg-slate-100 border border-transparent text-slate-500"}
+          focus-within:ring-2 focus-within:ring-blue-500/40`}
         >
-          <FaSearch className="mr-2" />
-
+          <FaSearch size={12} className="shrink-0 opacity-60" />
           <input
             type="text"
-            placeholder="Search..."
-            className={`outline-none bg-transparent ${
-              darkMode
-                ? "text-white"
-                : "text-black"
-            }`}
+            placeholder="Quick search..."
+            aria-label="Quick search"
+            className="bg-transparent outline-none w-36 text-sm placeholder-current"
           />
         </div>
 
+        {/* Bell */}
         <button
-          className={`p-3 rounded-xl ${
-            darkMode
-              ? "bg-gray-800"
-              : "bg-gray-100"
-          }`}
+          className={`relative p-2.5 rounded-xl transition-colors ${darkMode ? "bg-slate-800 hover:bg-slate-700 border border-slate-700" : "bg-slate-100 hover:bg-slate-200"}`}
+          aria-label="Notifications"
         >
-          <FaBell />
+          <FaBell size={15} className={darkMode ? "text-slate-300" : "text-slate-600"} />
+          {/* notification dot */}
+          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-800" />
         </button>
 
-        <div className="flex items-center gap-3">
-
-          <FaUserCircle
-            size={40}
-            className="text-blue-500"
-          />
-
-          <div>
-
-            <p className="font-semibold">
-              Admin User
-            </p>
-
-            <p className="text-xs text-gray-500">
-              Logistics Manager
-            </p>
-
+        {/* Avatar */}
+        <div className={`flex items-center gap-3 px-3 py-1.5 rounded-xl cursor-pointer transition-colors
+          ${darkMode ? "hover:bg-slate-800" : "hover:bg-slate-100"}`}
+        >
+          <div className="relative">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+              <span className="text-white text-sm font-bold">A</span>
+            </div>
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-white" />
           </div>
 
+          <div className="hidden lg:block">
+            <p className={`text-sm font-semibold leading-tight ${darkMode ? "text-white" : "text-slate-800"}`}>
+              Admin User
+            </p>
+            <p className={`text-[11px] ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+              Logistics Manager
+            </p>
+          </div>
         </div>
 
       </div>
-
     </header>
   );
 }
